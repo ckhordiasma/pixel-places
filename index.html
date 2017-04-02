@@ -23,26 +23,31 @@
   <style type="text/css">
 body {background: lightblue;padding: 20px;}
 pre {color: black}
-img {position: relative;}
+img {position: relative; border:2px;}
 canvas {
-  image-rendering: optimizeSpeed;             /* Older versions of FF          */
-  image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
-  image-rendering: -webkit-optimize-contrast; /* Safari                        */
-  image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
-  image-rendering: pixelated;                 /* Awesome future-browsers       */
-  -ms-interpolation-mode: nearest-neighbor;   /* IE                            */
+	border:solid 2px black;
+	
 }
   </style>
 
   <title> Pixels</title>
 
 <script type="text/javascript">//<![CDATA[
+
+//Sources I used online:
+// http://stackoverflow.com/questions/23971717/magnifying-glass-that-follows-cursor-for-canvas
+// http://stackoverflow.com/questions/8751020/how-to-get-a-pixels-x-y-coordinate-color-from-an-image
+// http://stackoverflow.com/questions/14208673/how-to-draw-grid-using-html5-and-canvas-or-svg
+
+
+
 $(window).load(function(){
 $(function() {
     
 	
 	var img = new Image();
 	img.src = 'tracer.png';
+	img.style = 
 	pixelZoomRatio = 5;
 	img.onload = function (e) {
 		canvasMain = $('#main')[0];
@@ -71,8 +76,8 @@ $(function() {
         var pixelData = this.getContext('2d').getImageData(event.offsetX, event.offsetY, 1, 1).data;
         
 		var pixelRatio = 1 / pixelZoomRatio;
-		var pixelX = Math.floor(event.offsetX/4);
-		var pixelY = Math.floor(event.offsetY/4);
+		var pixelX = Math.floor(event.offsetX/4) + parseInt($('#startPtX').val());
+		var pixelY = Math.floor(event.offsetY/4) + parseInt($('#startPtY').val());
 		
         $('#output').html(
 			'Coords: (' + pixelX + ' , ' + pixelY + ' ) ' +
@@ -108,9 +113,10 @@ $(function() {
 </head>
 
 <body data-feedly-mini="yes">
-	
+  <input type="text" id="startPtX"><br />
+  <input type="text" id="startPtY"><br />
   <canvas id="zoom" width="50" height="50" style="position:absolute; top:0; left:0; display:none; z-index:5"></canvas>
-  <canvas id="main" width="50" heigth="50" ></canvas>
+  <canvas id="main" width="50" height="50" ></canvas>
   
   <pre id="output"></pre>
   
