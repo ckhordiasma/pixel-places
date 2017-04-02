@@ -59,6 +59,10 @@ $(function() {
         
         var pixelData = this.canvas.getContext('2d').getImageData(event.offsetX, event.offsetY, 1, 1).data;
         
+		var pixelRatio = 4;
+		var pixelX = event.offsetX/4;
+		var pixelY = event.offsetY/4;
+		
         $('#output').html(
 			'Coords: (' + event.offsetX + ' , ' + event.offsetY + ' ) ' +
 			'<br>R: ' + pixelData[0] + 
