@@ -20,7 +20,8 @@
 
   
 
-  <style type="text/css">
+<style type="text/css">
+
 body {background: lightblue;padding: 20px;}
 pre {color: black}
 img {position: relative; border:2px;}
@@ -57,10 +58,16 @@ img {position: relative; border:2px;}
 #display{
 	position:absolute;
 }
-  </style>
+
+label {
+	width: 150px;
+	display: inline-block;
+	
+}
+</style>
 
   <title> Pixels</title>
-
+ 
 <script type="text/javascript">//<![CDATA[
 
 //Sources I used online:
@@ -70,28 +77,33 @@ img {position: relative; border:2px;}
 // http://stackoverflow.com/questions/5422265/how-can-i-pre-populate-html-form-input-fields-from-url-parameters
 // http://html5.litten.com/using-multiple-html5-canvases-as-layers/
 
+pixelZoomRatio = 20;
+	var img = new Image();
+	img.crossOrigin = "Anonymous";
+
 $(window).load(function(){
 $(function() {
     
+	$('#startPtX').val(querySt("x") || $('#startPtX').val());
+	$('#startPtY').val(querySt("y") || $('#startPtY').val());
+	$('#imgLoc').val(querySt("img") || $('#imgLoc').val());
 	
-	var img = new Image();
-	//img.src = 'tracer-cropped.png';
-	img.src = 'http://i.imgur.com/Yk7chwD.png';
-	
-	img.crossOrigin = "Anonymous";
+	$('form').attr('action', 'javascript:updateImage()');
 	
 
-	pixelZoomRatio = 20;
+
+	img.onload = updateCanvas;
 	
-	$('#startPtX').val(querySt("x"));
-	$('#startPtY').val(querySt("y"));
+	updateImage();
 	
-	img.onload = function (e) {
+	
+	
+	function updateCanvas(e) {
 		canvasMain = $('#main')[0];
 		grid = $('#grid')[0];
 		//console.log(canvasMain);
-        canvasMain.width = this.width * pixelZoomRatio;
-        canvasMain.height = this.height * pixelZoomRatio;
+		canvasMain.width = this.width * pixelZoomRatio;
+		canvasMain.height = this.height * pixelZoomRatio;
 		//console.log(this.width);
 		//console.log(pixelZoomRatio);
 		//console.log(canvasMain.width);
@@ -100,13 +112,15 @@ $(function() {
 		
 		drawGrid(grid);
 		canvasMain.getContext('2d').imageSmoothingEnabled = false;
-        canvasMain.getContext('2d').drawImage(this, 0, 0, canvasMain.width, canvasMain.height);			
+		//console.log(img);
+		canvasMain.getContext('2d').drawImage(img, 0, 0, canvasMain.width, canvasMain.height);			
 		
 	};
+
+	
+	
 	
 	canvasMain = $('#main')[0];
-	
-	
 	$('#grid').mouseout(function(e) {
 		$("#zoomBox")[0].style.display = "none";
 	});
@@ -152,6 +166,12 @@ $(function() {
 
 });//]]> 
 
+
+function updateImage() {
+		img.src=$('#imgLoc').val();	
+}
+
+
 function querySt(ji) {
 
 	hu = window.location.search.substring(1);
@@ -163,7 +183,7 @@ function querySt(ji) {
 			return ft[1];
 		}
 	}
-	return 0;
+	
 }
 
 function drawGrid(canvas) {
@@ -236,13 +256,15 @@ function drawGrid(canvas) {
   
 </head>
 
-<body data-feedly-mini="yes">
-  <label for="startPtX">Start X Point: </label><input type="text" id="startPtX" value=0 size=5><br />
-  <label for="startPtX">Start Y Point: </label><input type="text" id="startPtY" value=0 size=5><br /><br />
+<body>
+  <form ><label for="imgLoc" >Image Location: </label><input type="text" id="imgLoc" value="http://i.imgur.com/Yk7chwD.png" size=30><button action="submit" id="loadBtn">LOAD</button></form><br />
+  <label for="startPtX" >Start X Point: </label><input type="text" id="startPtX" value=0 size=5><br />
+  <label for="startPtX" >Start Y Point: </label><input type="text" id="startPtY" value=0 size=5><br /><br />
   <div id="zoomBox">
 	<canvas id="zoom" width="50" height="50" ></canvas>
 	<pre id="zoomOutput" style="background-color:white;padding:3px;"></pre>
 	
+  </div>
   </div>
   <pre id="output"></pre>
   <br />
