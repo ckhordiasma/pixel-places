@@ -27,8 +27,35 @@ img {position: relative; border:2px;}
 #zoom {
 	border:solid 2px black;
 }
-#main{
+#main, #grid{
 	border:solid 10px black;
+}
+
+#main {
+	z-index: 1;
+	left:0px;
+	top:0px;
+	position:absolute;
+	
+}
+
+#grid {
+	z-index: 2;
+	left:0px;
+	top:0px;
+	position:absolute;
+}
+
+#zoomBox{
+	position:absolute; 
+	top:0; 
+	left:0; 
+	display:none; 
+	z-index:9;
+}
+
+#display{
+	position:absolute;
 }
   </style>
 
@@ -41,7 +68,7 @@ img {position: relative; border:2px;}
 // http://stackoverflow.com/questions/8751020/how-to-get-a-pixels-x-y-coordinate-color-from-an-image
 // http://stackoverflow.com/questions/14208673/how-to-draw-grid-using-html5-and-canvas-or-svg
 // http://stackoverflow.com/questions/5422265/how-can-i-pre-populate-html-form-input-fields-from-url-parameters
-
+// http://html5.litten.com/using-multiple-html5-canvases-as-layers/
 
 $(window).load(function(){
 $(function() {
@@ -49,7 +76,11 @@ $(function() {
 	
 	var img = new Image();
 	img.src = 'tracer-cropped.png';
-	img.style = 
+	
+	
+	img.crossOrigin = "Anonymous";
+	
+
 	pixelZoomRatio = 20;
 	
 	$('#startPtX').val(querySt("x"));
@@ -57,15 +88,17 @@ $(function() {
 	
 	img.onload = function (e) {
 		canvasMain = $('#main')[0];
+		grid = $('#grid')[0];
 		//console.log(canvasMain);
         canvasMain.width = this.width * pixelZoomRatio;
         canvasMain.height = this.height * pixelZoomRatio;
 		//console.log(this.width);
 		//console.log(pixelZoomRatio);
 		//console.log(canvasMain.width);
-		canvasMain.style.width = this.width * pixelZoomRatio;
-		canvasMain.style.height = this.height * pixelZoomRatio;
-		drawGrid();
+		grid.width = canvasMain.width;
+		grid.height = canvasMain.height;
+		
+		drawGrid(grid);
 		canvasMain.getContext('2d').imageSmoothingEnabled = false;
         canvasMain.getContext('2d').drawImage(this, 0, 0, canvasMain.width, canvasMain.height);			
 		
@@ -74,13 +107,13 @@ $(function() {
 	canvasMain = $('#main')[0];
 	
 	
-	$('#main').mouseout(function(e) {
+	$('#grid').mouseout(function(e) {
 		$("#zoomBox")[0].style.display = "none";
 	});
 	
-    $('#main').mousemove(function(e) {
-                
-        var pixelData = this.getContext('2d').getImageData(event.offsetX, event.offsetY, 1, 1).data;
+    $('#grid').mousemove(function(e) {
+        
+        var pixelData = $('#main')[0].getContext('2d').getImageData(event.offsetX, event.offsetY, 1, 1).data;
         
 		var pixelRatio = 1;
 		var pixelX = Math.floor(event.offsetX/pixelZoomRatio) + parseInt($('#startPtX').val()) ;
@@ -133,14 +166,14 @@ function querySt(ji) {
 	return 0;
 }
 
-function drawGrid() {
-            var cnv = document.getElementById("main");
+function drawGrid(canvas) {
+            var cnv = canvas;//document.getElementById(canvasName);
             
             var gridOptions = {
                 minorLines: {
                     separation: pixelZoomRatio,
                     color: '#999999',
-					thickness: 1,
+					thickness: 0.01,
                 },
                 majorLines: {
                     separation: pixelZoomRatio*10,
@@ -206,13 +239,18 @@ function drawGrid() {
 <body data-feedly-mini="yes">
   <label for="startPtX">Start X Point: </label><input type="text" id="startPtX" value=0 size=5><br />
   <label for="startPtX">Start Y Point: </label><input type="text" id="startPtY" value=0 size=5><br /><br />
-  <div id="zoomBox" style="position:absolute; top:0; left:0; display:none; z-index:5" >
+  <div id="zoomBox">
 	<canvas id="zoom" width="50" height="50" ></canvas>
 	<pre id="zoomOutput" style="background-color:white;padding:3px;"></pre>
 	
   </div>
-  <canvas id="main" width="50" height="50" ></canvas>
-    <pre id="output"></pre>
+  <pre id="output"></pre>
+  <br />
+  <div id="display">
+	<canvas id="main" width="50" height="50" ></canvas>
+	<canvas id="grid" width="50" height="50" ></canvas>
+  </div>
+  
   
 
   <script>
