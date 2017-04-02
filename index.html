@@ -47,6 +47,10 @@ img {position: relative; border:2px;}
 	position:absolute;
 }
 
+#grid:hover{
+	cursor: pointer;
+}
+
 #zoomBox{
 	position:absolute; 
 	top:0; 
@@ -62,7 +66,6 @@ img {position: relative; border:2px;}
 label {
 	width: 150px;
 	display: inline-block;
-	
 }
 </style>
 
@@ -78,8 +81,10 @@ label {
 // http://html5.litten.com/using-multiple-html5-canvases-as-layers/
 
 pixelZoomRatio = 20;
-	var img = new Image();
-	img.crossOrigin = "Anonymous";
+var img = new Image();
+img.crossOrigin = "Anonymous";
+var imgWidth=0;
+var imgHeight=0;
 
 $(window).load(function(){
 $(function() {
@@ -96,6 +101,7 @@ $(function() {
 	img.onload = updateCanvas;
 	
 	updateImage();
+	
 	genShareLink();
 	
 	$('#startPtX').on("change paste keyup", genShareLink);
@@ -104,7 +110,13 @@ $(function() {
 	
 	function genShareLink(){
 		var shareString = window.location.origin + '/pixel-places/?x=' + $('#startPtX').val() + '&y=' + $('#startPtY').val() + '&img=' + $('#imgLoc').val();
-		$('#shareLink').html('<a href=\"' + shareString + '\">' + shareString + '</a>');
+		var placesString = 'https://www.reddit.com/place?webview=true#x=' + (+$('#startPtX').val() + +imgWidth/2 ) + '&y=' + (+$('#startPtY').val() + +parseInt(imgHeight)/2);
+		
+		function hrefLink(linkStr){
+			return '<a href=\"' + linkStr + '\">' + linkStr + '</a>';
+		}
+		
+		$('#shareLink').html(hrefLink(shareString) + '<br /><br />' + hrefLink(placesString));
 
 	}
 	
@@ -112,6 +124,11 @@ $(function() {
 		canvasMain = $('#main')[0];
 		grid = $('#grid')[0];
 		//console.log(canvasMain);
+		
+		//these two are used for the places share link.
+		imgWidth=this.width;
+		imgHeight=this.height;
+		
 		canvasMain.width = this.width * pixelZoomRatio;
 		canvasMain.height = this.height * pixelZoomRatio;
 		//console.log(this.width);
@@ -124,7 +141,7 @@ $(function() {
 		canvasMain.getContext('2d').imageSmoothingEnabled = false;
 		//console.log(img);
 		canvasMain.getContext('2d').drawImage(img, 0, 0, canvasMain.width, canvasMain.height);			
-		
+		genShareLink();
 	};
 
 	
@@ -170,6 +187,17 @@ $(function() {
         canvasZoom.style.display = "block";
     });
 	
+	$('#grid').click(function (e) {
+		var pixelData = $('#main')[0].getContext('2d').getImageData(event.offsetX, event.offsetY, 1, 1).data;
+        
+		var pixelRatio = 1;
+		var pixelX = Math.floor(event.offsetX/pixelZoomRatio) + parseInt($('#startPtX').val()) ;
+		var pixelY = Math.floor(event.offsetY/pixelZoomRatio) + parseInt($('#startPtY').val()) ;
+		
+		var placesString = 'https://www.reddit.com/place?webview=true#x=' + pixelX + '&y=' + pixelY;
+		//console.log(placesString);
+		window.open(placesString);
+	});
 
     
 });
