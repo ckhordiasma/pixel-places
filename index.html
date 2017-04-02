@@ -4,17 +4,7 @@
   
   <meta name="robots" content="noindex, nofollow">
   <meta name="googlebot" content="noindex, nofollow">
-
-  
-  
-
-  
-  
-  
-
-  
-
-  <script type="text/javascript" src="./pixels_files/jquery-1.7.1.js"></script>
+ <script type="text/javascript" src="./pixels_files/jquery-1.7.1.js"></script>
 
   
 
@@ -36,28 +26,38 @@ pre {color: black}
 img {position: relative;}
   </style>
 
-  <title> by thirtydot</title>
-
-  
-    
-
-
-
+  <title> Pixels</title>
 
 <script type="text/javascript">//<![CDATA[
 $(window).load(function(){
 $(function() {
     
+	$('img').mouseout(function(e) {
+		$("#zoom")[0].style.display = "none";
+	});
+	
     $('img').mousemove(function(e) {
         
-        if(!this.canvas) {
-            this.canvas = $('<canvas />')[0];
-            this.canvas.width = this.width;
-            this.canvas.height = this.height;
-            this.canvas.getContext('2d').drawImage(this, 0, 0, this.width, this.height);
+		var pixelZoomRatio = 10;
+        if(!this.canvasMain) {
+            this.canvasMain = $('<canvas />', {'id': 'main'})[0];
+            this.canvasMain.width = this.width * pixelZoomRatio;
+            this.canvasMain.height = this.height * pixelZoomRatio;
+            this.canvasMain.getContext('2d').drawImage(this, 0, 0, this.width, this.height, 0, 0, this.canvasMain.width, this.canvasMain.height);			
         }
+		
+		canvasZoom = $("#zoom")[0];
+		canvasZoom.fillStyle = "white";
+		canvasZoom.getContext('2d').fillRect(0,0,canvasZoom.width, canvasZoom.height);
+		
+		canvasZoom.getContext('2d').drawImage(this.canvasMain, e.x, e.y, canvasZoom.width, canvasZoom.height, 0, 0, canvasZoom.width, canvasZoom.height);
+		
+		canvasZoom.style.top = e.pageY + 10 + "px";
+		canvasZoom.style.left = e.pageX + 10 + "px";
+		canvasZoom.style.display = "block";
+	
         
-        var pixelData = this.canvas.getContext('2d').getImageData(event.offsetX, event.offsetY, 1, 1).data;
+        var pixelData = this.canvasMain.getContext('2d').getImageData(event.offsetX, event.offsetY, 1, 1).data;
         
 		var pixelRatio = 4;
 		var pixelX = Math.floor(event.offsetX/4);
@@ -72,8 +72,7 @@ $(function() {
         
         
     });
-    
-    
+	
     
 });
 });//]]> 
@@ -84,9 +83,11 @@ $(function() {
 </head>
 
 <body data-feedly-mini="yes">
+	
+  <canvas id="zoom" width="50" height="50" style="position:absolute; top:0; left:0; display:none"></canvas>
   <img src="tracer.png">
 
-<pre id="output"></pre>
+  <pre id="output"></pre>
   
   <script>
   // tell the embed parent frame the height of the content
