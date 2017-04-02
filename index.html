@@ -21,9 +21,17 @@
   
 
   <style type="text/css">
-    body {background: lightblue;padding: 20px;}
+body {background: lightblue;padding: 20px;}
 pre {color: black}
 img {position: relative;}
+canvas {
+  image-rendering: optimizeSpeed;             /* Older versions of FF          */
+  image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
+  image-rendering: -webkit-optimize-contrast; /* Safari                        */
+  image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
+  image-rendering: pixelated;                 /* Awesome future-browsers       */
+  -ms-interpolation-mode: nearest-neighbor;   /* IE                            */
+}
   </style>
 
   <title> Pixels</title>
@@ -32,34 +40,37 @@ img {position: relative;}
 $(window).load(function(){
 $(function() {
     
-	$('img').mouseout(function(e) {
+	
+	var img = new Image();
+	img.src = 'tracer.png';
+	pixelZoomRatio = 5;
+	img.onload = function (e) {
+		canvasMain = $('#main')[0];
+		//console.log(canvasMain);
+        canvasMain.width = this.width * pixelZoomRatio;
+        canvasMain.height = this.height * pixelZoomRatio;
+		//console.log(this.width);
+		//console.log(pixelZoomRatio);
+		//console.log(canvasMain.width);
+		canvasMain.style.width = this.width * pixelZoomRatio;
+		canvasMain.style.height = this.height * pixelZoomRatio;
+		canvasMain.getContext('2d').imageSmoothingEnabled = false;
+        canvasMain.getContext('2d').drawImage(this, 0, 0, canvasMain.width, canvasMain.height);			
+
+	};
+	
+	canvasMain = $('#main')[0];
+	
+	
+	$('#main').mouseout(function(e) {
 		$("#zoom")[0].style.display = "none";
 	});
 	
-    $('img').mousemove(function(e) {
+    $('#main').mousemove(function(e) {
+                
+        var pixelData = this.getContext('2d').getImageData(event.offsetX, event.offsetY, 1, 1).data;
         
-		var pixelZoomRatio = 10;
-        if(!this.canvasMain) {
-            this.canvasMain = $('<canvas />', {'id': 'main'})[0];
-            this.canvasMain.width = this.width * pixelZoomRatio;
-            this.canvasMain.height = this.height * pixelZoomRatio;
-            this.canvasMain.getContext('2d').drawImage(this, 0, 0, this.width, this.height, 0, 0, this.canvasMain.width, this.canvasMain.height);			
-        }
-		
-		canvasZoom = $("#zoom")[0];
-		canvasZoom.fillStyle = "white";
-		canvasZoom.getContext('2d').fillRect(0,0,canvasZoom.width, canvasZoom.height);
-		
-		canvasZoom.getContext('2d').drawImage(this.canvasMain, e.x, e.y, canvasZoom.width, canvasZoom.height, 0, 0, canvasZoom.width, canvasZoom.height);
-		
-		canvasZoom.style.top = e.pageY + 10 + "px";
-		canvasZoom.style.left = e.pageX + 10 + "px";
-		canvasZoom.style.display = "block";
-	
-        
-        var pixelData = this.canvasMain.getContext('2d').getImageData(event.offsetX, event.offsetY, 1, 1).data;
-        
-		var pixelRatio = 4;
+		var pixelRatio = 1 / pixelZoomRatio;
 		var pixelX = Math.floor(event.offsetX/4);
 		var pixelY = Math.floor(event.offsetY/4);
 		
@@ -68,7 +79,21 @@ $(function() {
 			'<br>R: ' + pixelData[0] + 
 			'<br>G: ' + pixelData[1] + 
 			'<br>B: ' + pixelData[2] + 
-			'<br>A: ' + pixelData[3]);
+			'<br>A: ' + pixelData[3]
+		);
+		
+		
+		canvasZoom = $("#zoom")[0];
+		canvasZoom.getContext('2d').fillStyle = "rgb(" + pixelData[0] + "," + pixelData[1] + "," + pixelData[2] + ")";
+		//console.log(canvasZoom.fillStyle);
+		canvasZoom.getContext('2d').fillRect(0,0,canvasZoom.width, canvasZoom.height);
+		
+		//canvasZoom.getContext('2d').drawImage(this.canvasMain, e.x, e.y, canvasZoom.width, canvasZoom.height, 0, 0, canvasZoom.width, canvasZoom.height);
+		
+		canvasZoom.style.top = e.pageY + 10 + "px";
+		canvasZoom.style.left = e.pageX + 10 + "px";
+		canvasZoom.style.display = "block";
+	
         
         
     });
@@ -84,9 +109,9 @@ $(function() {
 
 <body data-feedly-mini="yes">
 	
-  <canvas id="zoom" width="50" height="50" style="position:absolute; top:0; left:0; display:none"></canvas>
-  <img src="tracer.png">
-
+  <canvas id="zoom" width="50" height="50" style="position:absolute; top:0; left:0; display:none; z-index:5"></canvas>
+  <canvas id="main" width="50" heigth="50" ></canvas>
+  
   <pre id="output"></pre>
   
   <script>
