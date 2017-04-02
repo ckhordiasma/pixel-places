@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<!-- saved from url=(0056)http://fiddle.jshell.net/thirtydot/9SEMf/869/show/light/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+ <script type="text/javascript" src="./pixels_files/jquery-1.7.1.js"></script>
+
+  
+
+  
+    <link rel="stylesheet" type="text/css" href="./pixels_files/normalize.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" type="text/css" href="./pixels_files/result-light.css">
+  
+
+  
+
+<style type="text/css">
+
+body {background: lightblue;padding: 20px;}
+pre {color: black}
+img {position: relative; border:2px;}
+#zoom {
+	border:solid 2px black;
+}
+#main, #grid{
+	border:solid 10px black;
+}
+
+#main {
+	z-index: 1;
+	left:0px;
+	top:0px;
+	position:absolute;
+	
+}
+
+#grid {
+	z-index: 2;
+	left:0px;
+	top:0px;
+	position:absolute;
+}
+
+#grid:hover{
+	cursor: pointer;
+}
+
+#zoomBox{
+	position:absolute; 
+	top:0; 
+	left:0; 
+	display:none; 
+	z-index:9;
+}
+
+#display{
+	position:absolute;
+}
+
+label {
+	width: 150px;
+	display: inline-block;
+}
+</style>
+
+  <title> Pixels</title>
+ 
+<script type="text/javascript">//<![CDATA[
+
+//Sources I used online:
+// http://stackoverflow.com/questions/23971717/magnifying-glass-that-follows-cursor-for-canvas
+// http://stackoverflow.com/questions/8751020/how-to-get-a-pixels-x-y-coordinate-color-from-an-image
+// http://stackoverflow.com/questions/14208673/how-to-draw-grid-using-html5-and-canvas-or-svg
+// http://stackoverflow.com/questions/5422265/how-can-i-pre-populate-html-form-input-fields-from-url-parameters
+// http://html5.litten.com/using-multiple-html5-canvases-as-layers/
+
+pixelZoomRatio = 20;
+var img = new Image();
+img.crossOrigin = "Anonymous";
+var imgWidth=0;
+var imgHeight=0;
+
+$(window).load(function(){
+$(function() {
+    
+	$('#startPtX').val(querySt("x") || $('#startPtX').val());
+	$('#startPtY').val(querySt("y") || $('#startPtY').val());
+	
+	$('#imgLoc').val(querySt("img") || $('#imgLoc').val());
+	$('#zoomSlider').val(querySt("zoom") || $('#zoomSlider').val());
+	
+	$('form').attr('action', 'javascript:updateImage()');
+	
+
+
+	img.onload = updateCanvas;
+	
+	updateImage();
+	
+	genShareLink();
+	
+	$('#startPtX').on("change paste keyup", genShareLink);
+	$('#startPtY').on("change paste keyup", genShareLink);
+	$('#imgLoc').on("change paste keyup", genShareLink);
+	
+	$('#zoomSlider').on("change input", function(){
+		pixelZoomRatio = $('#zoomSlider').val();		
+		img.src=$('#imgLoc').val();	
+		
+	});
+	
+	function genShareLink(){
+		var shareString = window.location.origin + 
+			'/pixel-places/?x=' + $('#startPtX').val() + 
+			'&y=' + $('#startPtY').val() + 
+			'&zoom=' + $('#zoomSlider').val() + 
+			'&img=' + $('#imgLoc').val();
+		var placesString = 'https://www.reddit.com/place?webview=true#x=' + (+$('#startPtX').val() + +imgWidth/2 ) + '&y=' + (+$('#startPtY').val() + +parseInt(imgHeight)/2);
+		
+		function hrefLink(linkStr){
+			return '<a href=\"' + linkStr + '\">' + linkStr + '</a>';
+		}
+		
+		$('#shareLink').html(hrefLink(shareString) + '<br /><br />' + hrefLink(placesString));
+
+	}
+	
+	function updateCanvas(e) {
+		canvasMain = $('#main')[0];
+		grid = $('#grid')[0];
+		//console.log(canvasMain);
+		
+		//these two are used for the places share link.
+		imgWidth=this.width;
+		imgHeight=this.height;
+		
+		canvasMain.width = this.width * pixelZoomRatio;
+		canvasMain.height = this.height * pixelZoomRatio;
+		//console.log(this.width);
+		//console.log(pixelZoomRatio);
+		//console.log(canvasMain.width);
+		grid.width = canvasMain.width;
+		grid.height = canvasMain.height;
+		
+		drawGrid(grid);
+		canvasMain.getContext('2d').imageSmoothingEnabled = false;
+		//console.log(img);
+		canvasMain.getContext('2d').drawImage(img, 0, 0, canvasMain.width, canvasMain.height);			
+		genShareLink();
+	};
+
+	
+	
+	
+	canvasMain = $('#main')[0];
+	$('#grid').mouseout(function(e) {
+		$("#zoomBox")[0].style.display = "none";
+	});
+	
+    $('#grid').mousemove(function(e) {
+        
+        var pixelData = $('#main')[0].getContext('2d').getImageData(event.offsetX, event.offsetY, 1, 1).data;
+        
+		var pixelRatio = 1;
+		var pixelX = Math.floor(event.offsetX/pixelZoomRatio) + parseInt($('#startPtX').val()) ;
+		var pixelY = Math.floor(event.offsetY/pixelZoomRatio) + parseInt($('#startPtY').val()) ;
+		
+        $('#output').html(
+			'Coords: (' + pixelX + ' , ' + pixelY + ' ) ' +
+			'<br>R: ' + pixelData[0] + 
+			'<br>G: ' + pixelData[1] + 
+			'<br>B: ' + pixelData[2] + 
+			'<br>A: ' + pixelData[3]
+		);
+		
+		$('#zoomOutput').html(
+			'(' + pixelX + ' , ' + pixelY + ' )'  
+		);
+		canvasZoom = $("#zoom")[0];
+		var currColor = "rgb(" + pixelData[0] + "," + pixelData[1] + "," + pixelData[2] + ")"
+		canvasZoom.getContext('2d').fillStyle = currColor;
+		//console.log(canvasZoom.fillStyle);
+		canvasZoom.getContext('2d').fillRect(0,0,canvasZoom.width, canvasZoom.height);
+		
+		//having the border change color is kinda distracting
+		//$('#main')[0].style["border-color"] = currColor;
+		//canvasZoom.getContext('2d').drawImage(this.canvasMain, e.x, e.y, canvasZoom.width, canvasZoom.height, 0, 0, canvasZoom.width, canvasZoom.height);
+		zoomBox = $("#zoomBox")[0];
+		zoomBox.style.top = e.pageY + 10 + "px";
+		zoomBox.style.left = e.pageX + 10 + "px";
+		zoomBox.style.display = "block";
+        canvasZoom.style.display = "block";
+    });
+	
+	$('#grid').click(function (e) {
+		var pixelData = $('#main')[0].getContext('2d').getImageData(event.offsetX, event.offsetY, 1, 1).data;
+        
+		var pixelRatio = 1;
+		var pixelX = Math.floor(event.offsetX/pixelZoomRatio) + parseInt($('#startPtX').val()) ;
+		var pixelY = Math.floor(event.offsetY/pixelZoomRatio) + parseInt($('#startPtY').val()) ;
+		
+		var placesString = 'https://www.reddit.com/place?webview=true#x=' + pixelX + '&y=' + pixelY;
+		//console.log(placesString);
+		window.open(placesString);
+	});
+
+    
+});
+
+});//]]> 
+
+
+function updateImage() {
+		img.src=$('#imgLoc').val();	
+}
+
+
+function querySt(ji) {
+
+	hu = window.location.search.substring(1);
+	gy = hu.split("&");
+
+	for (i=0;i<gy.length;i++) {
+		ft = gy[i].split("=");
+		if (ft[0] == ji) {
+			return ft[1];
+		}
+	}
+	
+}
+
+function drawGrid(canvas) {
+            var cnv = canvas;
+            
+            var gridOptions = {
+                minorLines: {
+                    separation: pixelZoomRatio,
+                    color: '#999999',
+					thickness: 0.01,
+                },
+                majorLines: {
+                    separation: pixelZoomRatio*10,
+                    color: '#333333',
+					thickness: 3,
+                }
+            };
+
+            drawGridLines(cnv, gridOptions.minorLines);
+            drawGridLines(cnv, gridOptions.majorLines);
+
+            return;
+        }
+
+        function drawGridLines(cnv, lineOptions) {
+
+
+            var iWidth = cnv.width;
+            var iHeight = cnv.height;
+
+            var ctx = cnv.getContext('2d');
+
+            ctx.strokeStyle = lineOptions.color;
+            ctx.lineWidth = lineOptions.thickness;
+            
+            ctx.beginPath();
+
+            var iCount = null;
+            var i = null;
+            var x = null;
+            var y = null;
+
+            iCount = Math.floor(iWidth / lineOptions.separation);
+
+            for (i = 1; i <= iCount; i++) {
+                x = (i * lineOptions.separation);
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, iHeight);
+                ctx.stroke();
+            }
+
+
+            iCount = Math.floor(iHeight / lineOptions.separation);
+
+            for (i = 1; i <= iCount; i++) {
+                y = (i * lineOptions.separation);
+                ctx.moveTo(0, y);
+                ctx.lineTo(iWidth, y);
+                ctx.stroke();
+            }
+
+            ctx.closePath();
+
+            return;
+        }
+
+
+</script>
+
+  
+</head>
+
+<body>
+  <form ><label for="imgLoc" >Image Location: </label><input type="text" id="imgLoc" value="http://i.imgur.com/Yk7chwD.png" size=30><button action="submit" id="loadBtn">LOAD URL</button></form><br />
+  <div>
+  <label for="startPtX" >Start X Point: </label><input type="text" id="startPtX" value=0 size=5><br />
+  <label for="startPtX" >Start Y Point: </label><input type="text" id="startPtY" value=0 size=5><br />
+  <label for="zoomSlider" >Scale: </label><input type="range" id="zoomSlider" max=100 min=1 step=1 value=10 style="vertical-align:middle"><br /><br />
+  </div>
+  <pre id="shareLink"></pre><br /><br />
+  
+  <div id="zoomBox">
+	<canvas id="zoom" width="50" height="50" ></canvas>
+	<pre id="zoomOutput" style="background-color:white;padding:3px;"></pre>
+	
+  </div>
+  </div>
+  <pre id="output">
+Coords: (0 , 0 ) 
+R: 0
+G: 0
+B: 0
+A: 0
+</pre>
+  <br />
+  <div id="display">
+	<canvas id="main" width="50" height="50" ></canvas>
+	<canvas id="grid" width="50" height="50" ></canvas>
+  </div>
+  
+  
+
+  <script>
+  // tell the embed parent frame the height of the content
+  if (window.parent && window.parent.parent){
+    window.parent.parent.postMessage(["resultsFrame", {
+      height: document.body.getBoundingClientRect().height,
+      slug: "9SEMf"
+    }], "*")
+  }
+</script>
+
+
+
+
+
+<div id="feedly-mini" title="feedly Mini tookit"></div></body></html>
