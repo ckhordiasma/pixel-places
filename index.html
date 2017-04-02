@@ -86,6 +86,7 @@ $(function() {
     
 	$('#startPtX').val(querySt("x") || $('#startPtX').val());
 	$('#startPtY').val(querySt("y") || $('#startPtY').val());
+	
 	$('#imgLoc').val(querySt("img") || $('#imgLoc').val());
 	
 	$('form').attr('action', 'javascript:updateImage()');
@@ -95,8 +96,17 @@ $(function() {
 	img.onload = updateCanvas;
 	
 	updateImage();
+	genShareLink();
 	
+	$('#startPtX').on("change paste keyup", genShareLink);
+	$('#startPtY').on("change paste keyup", genShareLink);
+	$('#imgLoc').on("change paste keyup", genShareLink);
 	
+	function genShareLink(){
+		var shareString = window.location.origin + '/pixel-places/?x=' + $('#startPtX').val() + '&y=' + $('#startPtY').val() + '&img=' + $('#imgLoc').val();
+		$('#shareLink').html('<a href=\"' + shareString + '\">' + shareString + '</a>');
+
+	}
 	
 	function updateCanvas(e) {
 		canvasMain = $('#main')[0];
@@ -187,7 +197,7 @@ function querySt(ji) {
 }
 
 function drawGrid(canvas) {
-            var cnv = canvas;//document.getElementById(canvasName);
+            var cnv = canvas;
             
             var gridOptions = {
                 minorLines: {
@@ -260,13 +270,20 @@ function drawGrid(canvas) {
   <form ><label for="imgLoc" >Image Location: </label><input type="text" id="imgLoc" value="http://i.imgur.com/Yk7chwD.png" size=30><button action="submit" id="loadBtn">LOAD</button></form><br />
   <label for="startPtX" >Start X Point: </label><input type="text" id="startPtX" value=0 size=5><br />
   <label for="startPtX" >Start Y Point: </label><input type="text" id="startPtY" value=0 size=5><br /><br />
+  <pre id="shareLink"></pre><br /><br />
   <div id="zoomBox">
 	<canvas id="zoom" width="50" height="50" ></canvas>
 	<pre id="zoomOutput" style="background-color:white;padding:3px;"></pre>
 	
   </div>
   </div>
-  <pre id="output"></pre>
+  <pre id="output">
+Coords: (0 , 0 ) 
+R: 0
+G: 0
+B: 0
+A: 0
+</pre>
   <br />
   <div id="display">
 	<canvas id="main" width="50" height="50" ></canvas>
